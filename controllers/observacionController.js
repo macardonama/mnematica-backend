@@ -3,17 +3,48 @@ const Observacion = require('../models/Observacion');
 exports.registrarObservacion = async (req, res) => {
   try {
     const { grupo, fecha, docente, observacion_general, observaciones_individuales } = req.body;
+    const fechaObj = new Date(fecha);
 
-    const nueva = new Observacion({
-      grupo,
-      fecha: new Date(fecha),
-      docente,
-      observacion_general,
-      observaciones_individuales
-    });
+    // Buscar si ya existe una observación para ese grupo, fecha y docente
+    let existente = await Observacion.findOne({ grupo, fecha: fechaObj, docente });
 
-    await nueva.save();
-    res.status(200).json({ message: 'Observación registrada con éxito.' });
+    if (existente) {
+      // Actualizar o insertar observaciones individuales
+      observaciones_individuales.forEach(obsNueva => {
+        const index = existente.observaciones_individuales.findIndex(
+          obs => obs.nombre_estudiante === obsNueva.nombre_estudiante
+        );
+
+        if (index !== -1) {
+          // Si ya existe, actualizar
+          existente.observaciones_individuales[index] = obsNueva;
+        } else {
+          // Si no existe, agregar
+          existente.observaciones_individuales.push(obsNueva);
+        }
+      });
+
+      // Opcional: actualizar la observación general si se envía una nueva
+      if (observacion_general) {
+        existente.observacion_general = observacion_general;
+      }
+
+      await existente.save();
+      res.status(200).json({ message: 'Observación actualizada con éxito.' });
+    } else {
+      // Crear una nueva si no existe
+      const nueva = new Observacion({
+        grupo,
+        fecha: fechaObj,
+        docente,
+        observacion_general,
+        observaciones_individuales
+      });
+
+      await nueva.save();
+      res.status(200).json({ message: 'Observación registrada con éxito.' });
+    }
+
   } catch (error) {
     console.error('Error al guardar observación:', error);
     res.status(500).json({ error: 'Error al guardar observación' });
