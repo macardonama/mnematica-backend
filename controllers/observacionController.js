@@ -58,7 +58,7 @@ exports.getPlantillaNotas = async (req, res) => {
     });
 
     // Extraer todas las fechas únicas
-    const fechas = observaciones.map(o => o.fecha.toISOString().split('T')[0]);
+    const fechas = [...new Set(observaciones.map(o => o.fecha.toISOString().split('T')[0]))];
 
     // Extraer estudiantes y organizar por nombre
     const estudiantesMap = {};
