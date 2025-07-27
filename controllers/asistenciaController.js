@@ -29,6 +29,38 @@ const registrarAsistencia = async (req, res) => {
   }
 };
 
+const obtenerAsistenciasPorEstudiante = async (req, res) => {
+  const nombre = decodeURIComponent(req.params.nombre);
+  try {
+    const asistencias = await Asistencia.find({ nombre_estudiante: nombre }).sort({ fecha: 1 });
+    res.json(asistencias);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al obtener asistencias del estudiante', error });
+  }
+};
+
+// NUEVO 2: Obtener asistencias por nombre de docente (con filtro por fechas)
+const obtenerAsistenciasPorDocente = async (req, res) => {
+  const nombre = decodeURIComponent(req.query.docente);
+  const fechaInicio = req.query.fechaInicio ? new Date(req.query.fechaInicio) : null;
+  const fechaFin = req.query.fechaFin ? new Date(req.query.fechaFin) : null;
+
+  const filtro = { docente: nombre };
+  if (fechaInicio && fechaFin) {
+  filtro.fecha = { $gte: req.query.fechaInicio, $lte: req.query.fechaFin };
+}
+
+  try {
+    const asistencias = await Asistencia.find(filtro).sort({ fecha: 1 });
+    res.json(asistencias);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al obtener asistencias del docente', error });
+  }
+};
+
+
 module.exports = {
-  registrarAsistencia
+  registrarAsistencia,
+  obtenerAsistenciasPorEstudiante,
+  obtenerAsistenciasPorDocente
 };
